@@ -153,7 +153,9 @@ spec:
 ### 3. Doğrulama (Verification)
 Load Balancing testini yapalım. `nslookup` ile servisin IP'sini çözün.
 ```bash
-kubectl run -it --rm debug-pod --image=busybox:1.28 -- nslookup cache-service
+kubectl run -it --rm debug-pod --image=busybox -- sh
+
+Pod içinde komut : nslookup cache-service
 # Çıktıda servisin ClusterIP'sini (10.x.x.x) görmelisiniz.
 ```
 *Not: Service tek bir IP verir (VIP), ama trafiği arkadaki 3 poda dağıtır.*
