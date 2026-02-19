@@ -31,10 +31,10 @@ pipeline {
                         dir('database/k8s') {
                             // Uses 'Kubernetes CLI Plugin'
                             withKubeConfig([credentialsId: 'k8s-kubeconfig']) {
-                                sh "kubectl apply -f secret.yaml"
-                                sh "kubectl apply -f configmap.yaml"
-                                sh "kubectl apply -f service.yaml"
-                                sh "kubectl apply -f statefulset.yaml"
+                                sh "kubectl apply -f k8s/secret.yaml"
+                                sh "kubectl apply -f k8s/configmap.yaml"
+                                sh "kubectl apply -f k8s/service.yaml"
+                                sh "kubectl apply -f k8s/statefulset.yaml"
                             }
                         }
                     }

@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         OVERALL_STATUS = 'jenkins-deploy-backend'
-        DEPLOY_HOST    = '192.168.64.4'
+        DEPLOY_HOST    = '192.168.64.8'
         DEPLOY_PORT    = '30090' // Backend NodePort (If used)
     }
 
