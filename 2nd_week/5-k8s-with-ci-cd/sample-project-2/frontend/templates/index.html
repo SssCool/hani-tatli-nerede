@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hani Tatli Nerede?</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        form { display: inline-block; text-align: left; border: 1px solid #ccc; padding: 20px; border-radius: 5px; }
+        label { display: block; margin-bottom: 5px; }
+        input { margin-bottom: 10px; width: 100%; padding: 5px; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Tatli Severler Kayıt Formu</h1>
+    <form action="/register" method="post">
+        <label for="username">Adınız:</label>
+        <input type="text" id="username" name="username" required>
+        
+        <label for="email">E-posta:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <button type="submit">Kayıt Ol</button>
+    </form>
+    <br><br>
+    <a href="/userlist">Kayıtlı Kullanıcıları Gör</a>
+</body>
+</html>
