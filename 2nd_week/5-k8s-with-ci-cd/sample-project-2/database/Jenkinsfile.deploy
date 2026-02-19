@@ -28,7 +28,7 @@ pipeline {
                 script {
                     gitlabCommitStatus(name: 'deploy_db') {
                         echo "Deploying Database to Kubernetes (Plugin)..."
-                        dir('database/k8s') {
+                        dir('.') {
                             // Uses 'Kubernetes CLI Plugin'
                             withKubeConfig([credentialsId: 'k8s-kubeconfig']) {
                                 sh "kubectl apply -f k8s/secret.yaml"
