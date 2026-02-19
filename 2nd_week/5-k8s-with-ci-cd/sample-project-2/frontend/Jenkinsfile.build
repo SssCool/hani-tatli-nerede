@@ -19,7 +19,7 @@ pipeline {
                     updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'running')
                     gitlabCommitStatus(name: 'clone') {
                         git branch: 'main', 
-                            url: 'http://192.168.64.2/root/frontend.git',
+                            url: 'http://192.168.64.2/abdussamed/frontend.git',
                             credentialsId: 'gitlab-user-password'
                     }
                 }
@@ -100,7 +100,7 @@ pipeline {
         always {
             // Cleanup
             sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} 2>/dev/null || true"
-            sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:latest 2>/dev/null || true"
+            sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:samed-latest 2>/dev/null || true"
         }
     }
 }

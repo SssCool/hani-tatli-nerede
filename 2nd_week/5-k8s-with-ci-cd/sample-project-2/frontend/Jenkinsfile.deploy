@@ -18,7 +18,7 @@ pipeline {
                     updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'running')
                     gitlabCommitStatus(name: 'clone') {
                         git branch: 'main', 
-                            url: 'http://192.168.64.2/root/frontend.git',
+                            url: 'http://192.168.64.2/abdussamed/frontend.git',
                             credentialsId: 'gitlab-user-password'
                     }
                 }
@@ -29,12 +29,14 @@ pipeline {
             steps {
                 script {
                     gitlabCommitStatus(name: 'deploy_frontend') {
-                        echo "Deploying to Kubernetes..."
+                        echo "Deploying to Kubernetes (Plugin)..."
                         dir('frontend/k8s') {
-                            // Assuming Jenkins has kubectl configured
-                            sh "kubectl apply -f deployment.yaml"
-                            sh "kubectl apply -f service.yaml"
-                            sh "kubectl rollout restart deployment/frontend"
+                            // Uses 'Kubernetes CLI Plugin' (Modern approach)
+                            withKubeConfig([credentialsId: 'k8s-kubeconfig']) {
+                                sh "kubectl apply -f deployment.yaml"
+                                sh "kubectl apply -f service.yaml"
+                                sh "kubectl rollout restart deployment/frontend"
+                            }
                         }
                     }
                 }
@@ -46,9 +48,7 @@ pipeline {
                 script {
                     gitlabCommitStatus(name: 'verification') {
                         echo "Verifying deployment..."
-                        // Wait for rollout
                         sh "kubectl rollout status deployment/frontend --timeout=60s"
-                        // Smoke test
                         sh "curl -f http://${DEPLOY_HOST}:${DEPLOY_PORT} || echo 'Warning: Service might not be ready yet'"
                     }
                 }
