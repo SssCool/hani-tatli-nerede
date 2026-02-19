@@ -67,7 +67,6 @@ docker exec -u 0 -it jenkins bash -c 'curl -LO "https://dl.k8s.io/release/$(curl
 *   Kod GitLab'a push edildiğinde tetiklenmeli.
 *   **Güvenlik Taramaları:**
     *   Kodun içinde unutulmuş şifre var mı? (TruffleHog)
-    *   Kodda güvenlik açığı var mı? (Semgrep)
 *   Docker imajı build edilip Registry'e gönderilmeli.
 
 ### 3.2 CD Pipeline (Deploy)
