@@ -1,0 +1,104 @@
+pipeline {
+    agent any
+
+    triggers {
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true)
+    }
+
+    environment {
+        DOCKER_IMAGE   = 'kocakabdussamed/sbr-backend'
+        DOCKER_TAG     = "${env.BUILD_NUMBER}"
+        OVERALL_STATUS = 'jenkins-ci-backend'
+        HOST_WORKSPACE = "/var/jenkins_home/workspace/${env.JOB_NAME}"
+    }
+
+    stages {
+        stage('Clone Code') {
+            steps {
+                script {
+                    updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'running')
+                    gitlabCommitStatus(name: 'clone') {
+                        git branch: 'main', 
+                            url: 'http://192.168.64.2/root/backend.git',
+                            credentialsId: 'gitlab-user-password'
+                    }
+                }
+            }
+        }
+
+        stage('Security Scans') {
+            parallel {
+                stage('Secret Scan (TruffleHog)') {
+                    steps {
+                        script {
+                            gitlabCommitStatus(name: 'trufflehog') {
+                                sh "docker run --rm -v ${HOST_WORKSPACE}/backend:/pwd trufflesecurity/trufflehog:latest filesystem /pwd --fail --no-update"
+                            }
+                        }
+                    }
+                }
+
+                stage('SAST Scan (Semgrep)') {
+                    steps {
+                        script {
+                            gitlabCommitStatus(name: 'semgrep') {
+                                // Python specific rules
+                                sh "docker run --rm -v ${HOST_WORKSPACE}/backend:/src returntocorp/semgrep semgrep scan --config=p/python --severity ERROR --error"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    gitlabCommitStatus(name: 'docker_build') {
+                        dir('backend') {
+                            sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} -t ${DOCKER_IMAGE}:latest ."
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    gitlabCommitStatus(name: 'docker_push') {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-pat', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh '''
+                                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                                docker push "${DOCKER_IMAGE}:${DOCKER_TAG}"
+                                docker push "${DOCKER_IMAGE}:latest"
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Trigger Deploy') {
+            steps {
+                echo "Triggering Deploy Pipeline..."
+                build job: 'backend-deploy', wait: false
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Backend CI Successful"
+            updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'success')
+        }
+        failure {
+            echo "❌ Backend CI Failed"
+            updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'failed')
+        }
+        always {
+            sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} 2>/dev/null || true"
+            sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:latest 2>/dev/null || true"
+        }
+    }
+}

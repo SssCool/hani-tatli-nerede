@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+
+    triggers {
+        gitlab(triggerOnPush: true, triggerOnMergeRequest: true)
+    }
+
+    environment {
+        OVERALL_STATUS = 'jenkins-deploy-db'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'running')
+                    gitlabCommitStatus(name: 'clone') {
+                        git branch: 'main', 
+                            url: 'http://192.168.64.2/root/database.git',
+                            credentialsId: 'gitlab-user-password'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    gitlabCommitStatus(name: 'deploy_db') {
+                        echo "Deploying Database to Kubernetes..."
+                        dir('database/k8s') {
+                            sh "kubectl apply -f secret.yaml"
+                            sh "kubectl apply -f configmap.yaml"
+                            sh "kubectl apply -f service.yaml"
+                            sh "kubectl apply -f statefulset.yaml"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Verification') {
+            steps {
+                script {
+                    gitlabCommitStatus(name: 'verification') {
+                        echo "Verifying Database StatefulSet..."
+                        sh "kubectl rollout status statefulset/mysql --timeout=120s"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Database Deploy Successful"
+            updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'success')
+        }
+        failure {
+            echo "❌ Database Deploy Failed"
+            updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'failed')
+        }
+    }
+}
