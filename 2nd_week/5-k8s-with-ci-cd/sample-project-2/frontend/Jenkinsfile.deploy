@@ -18,7 +18,7 @@ pipeline {
                     updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'running')
                     gitlabCommitStatus(name: 'clone') {
                         git branch: 'main', 
-                            url: 'http://192.168.64.2/abdussamed/frontend.git',
+                            url: 'http://192.168.64.2/root/frontend.git',
                             credentialsId: 'gitlab-user-password'
                     }
                 }
