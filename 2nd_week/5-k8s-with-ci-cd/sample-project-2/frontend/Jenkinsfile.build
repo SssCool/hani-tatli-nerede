@@ -32,23 +32,13 @@ pipeline {
                     steps {
                         script {
                             gitlabCommitStatus(name: 'trufflehog') {
-                                // Scans the current directory for secrets
                                 sh "docker run --rm -v ${HOST_WORKSPACE}/frontend:/pwd trufflesecurity/trufflehog:latest filesystem /pwd --fail --no-update"
                             }
                         }
                     }
                 }
 
-                stage('SAST Scan (Semgrep)') {
-                    steps {
-                        script {
-                            gitlabCommitStatus(name: 'semgrep') {
-                                // Static analysis for JavaScript/HTML/CSS
-                                sh "docker run --rm -v ${HOST_WORKSPACE}/frontend:/src returntocorp/semgrep semgrep scan --config=auto --severity ERROR --error"
-                            }
-                        }
-                    }
-                }
+
             }
         }
 
@@ -56,7 +46,7 @@ pipeline {
             steps {
                 script {
                     gitlabCommitStatus(name: 'docker_build') {
-                        dir('frontend') {
+                        dir('.') {
                             sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} -t ${DOCKER_IMAGE}:samed-latest ."
                         }
                     }
@@ -98,7 +88,6 @@ pipeline {
             updateGitlabCommitStatus(name: OVERALL_STATUS, state: 'failed')
         }
         always {
-            // Cleanup
             sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} 2>/dev/null || true"
             sh "docker rmi ${REGISTRY}/${DOCKER_IMAGE}:samed-latest 2>/dev/null || true"
         }

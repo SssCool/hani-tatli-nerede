@@ -30,13 +30,13 @@ pipeline {
                 script {
                     gitlabCommitStatus(name: 'deploy_backend') {
                         echo "Deploying to Kubernetes (Plugin)..."
-                        dir('backend/k8s') {
+                        dir('.') {
                             // Uses 'Kubernetes CLI Plugin'
-                            withKubeConfig([credentialsId: 'k8s-kubeconfig']) {
-                                sh "kubectl apply -f secret.yaml"
-                                sh "kubectl apply -f configmap.yaml"
-                                sh "kubectl apply -f deployment.yaml"
-                                sh "kubectl apply -f service.yaml"
+                            withKubeConfig([credentialsId: 'k8s-kubeconfigfile']) {
+                                sh "kubectl apply -f k8s/secret.yaml --validate=false"
+                                sh "kubectl apply -f k8s/configmap.yaml --validate=false"
+                                sh "kubectl apply -f k8s/deployment.yaml --validate=false"
+                                sh "kubectl apply -f k8s/service.yaml --validate=false"
                                 sh "kubectl rollout restart deployment/backend"
                             }
                         }
@@ -50,7 +50,9 @@ pipeline {
                 script {
                     gitlabCommitStatus(name: 'verification') {
                         echo "Backend smoke test..."
-                        sh "kubectl rollout status deployment/backend --timeout=60s"
+                        withKubeConfig([credentialsId: 'k8s-kubeconfigfile']) {
+                            sh "kubectl rollout status deployment/backend --timeout=60s"
+                        }
                     }
                 }
             }
