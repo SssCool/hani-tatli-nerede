@@ -30,7 +30,7 @@ pipeline {
                         echo "Deploying Database to Kubernetes (Plugin)..."
                         dir('.') {
                             // Uses 'Kubernetes CLI Plugin'
-                            withKubeConfig([credentialsId: 'k8s-kubeconfig']) {
+                            withKubeConfig([credentialsId: 'k8s-kubeconfigfile']) {
                                 sh "kubectl apply -f k8s/secret.yaml"
                                 sh "kubectl apply -f k8s/configmap.yaml"
                                 sh "kubectl apply -f k8s/service.yaml"
@@ -47,7 +47,9 @@ pipeline {
                 script {
                     gitlabCommitStatus(name: 'verification') {
                         echo "Verifying Database StatefulSet..."
-                        sh "kubectl rollout status statefulset/mysql --timeout=120s"
+                        withKubeConfig([credentialsId: 'k8s-kubeconfigfile']) {
+                            sh "kubectl rollout status statefulset/mysql --timeout=120s"
+                        }
                     }
                 }
             }
